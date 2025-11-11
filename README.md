@@ -1,6 +1,7 @@
 # Modern MERN Project
 
-This project has been migrated from a legacy React application to a modern stack using:
+A full-stack web application built with the MERN stack (MongoDB, Express, React, Node.js).
+The project demonstrates a typical architecture for modern web apps, including authentication, routing, and CRUD operations.
 
 ## Tech Stack
 
