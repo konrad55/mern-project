@@ -4,7 +4,8 @@ const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
-const place = require("../models/place");
+const User = require("../models/user");
+const mongoose = require("mongoose");
 
 let DUMMY_PLACES = [
   {
@@ -97,10 +98,37 @@ const createPlace = async (req, res, next) => {
     creator,
   });
 
+  let user;
+
+  try {
+    // place = await Place.findById(placeId);
+    user = await User.findById(creator);
+  } catch (err) {
+    const error = new HttpError(
+      "Creating place failed, please try again.",
+      500
+    );
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError("Could not find a user for provided id.", 404);
+    return next(error);
+  }
+
   try {
     await createdPlace.save();
+
+    // Sprawdź czy user.places istnieje, jeśli nie - zainicjalizuj jako pustą tablicę
+    if (!user.places) {
+      user.places = [];
+    }
+
+    user.places.push(createdPlace);
+    await user.save();
   } catch (err) {
     const error = new HttpError("Creating place failed, please try again", 500);
+    console.log(err);
     return next(error);
   }
 
@@ -110,7 +138,9 @@ const createPlace = async (req, res, next) => {
 const updatePlace = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs passed, please check your data.", 422);
+    return next(
+      new HttpError("Invalid inputs passed, please check your data.", 422)
+    );
   }
 
   const { title, description } = req.body;
